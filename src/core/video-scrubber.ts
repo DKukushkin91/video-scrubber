@@ -121,8 +121,11 @@ const resolveOptions = (
 const isAbortError = (error: unknown): boolean =>
   error instanceof DOMException && error.name === 'AbortError';
 
-const isInteractiveTarget = (target: EventTarget | null): boolean =>
-  target instanceof Element && target.closest(INTERACTIVE_DESCENDANTS) !== null;
+const isInteractiveDescendant = (target: EventTarget | null, root: HTMLElement): boolean => {
+  const interactive = target instanceof Element ? target.closest(INTERACTIVE_DESCENDANTS) : null;
+
+  return interactive !== null && interactive !== root && root.contains(interactive);
+};
 
 const isSameSnapshot = (left: IVideoScrubberSnapshot, right: IVideoScrubberSnapshot): boolean =>
   left.isDragging === right.isDragging &&
@@ -136,7 +139,10 @@ const isSameSnapshot = (left: IVideoScrubberSnapshot, right: IVideoScrubberSnaps
  * перетаскивание, поэтому обычный клик воспроизведение не трогает. Seek-очередь — last-value-wins
  * с одним присваиванием `currentTime` на кадр: по спецификации новое присваивание отменяет
  * незавершённый seek, и на `video.seeking` контроллер не смотрит — иначе потерянный `seeked` его
- * подвешивал бы. На верхнем уровне модуля DOM не трогается — пакет импортируется на сервере.
+ * подвешивал бы. Любая перезагрузка медиа (смена `src`, собственный `load()` на первом жесте)
+ * приходит как `emptied`, после которого браузер сам ставит паузу — `play` заново утверждается там же
+ * и в конце жеста, иначе «крутится, пока play» переставало бы быть правдой. На верхнем уровне модуля
+ * DOM не трогается — пакет импортируется на сервере.
  */
 export const createVideoScrubber = (
   video: HTMLVideoElement,
@@ -153,6 +159,7 @@ export const createVideoScrubber = (
   let pendingSeek: number | null = null;
   let rafId: number | null = null;
   let suppressNextClick = false;
+  let awaitingSelfLoad = false;
   let savedTouchAction = '';
   let savedUserSelect = '';
   let savedWebkitUserSelect = '';
@@ -249,7 +256,7 @@ export const createVideoScrubber = (
   };
 
   const handlePlaybackError = (error: unknown): void => {
-    if (!isAbortError(error)) {
+    if (!destroyed && !isAbortError(error)) {
       resolved.onPlaybackError?.(error);
     }
   };
@@ -276,6 +283,7 @@ export const createVideoScrubber = (
 
     gesture = IDLE_GESTURE;
     activePointerId = null;
+    awaitingSelfLoad = false;
     target.style.userSelect = savedUserSelect;
     target.style.webkitUserSelect = savedWebkitUserSelect;
 
@@ -287,10 +295,10 @@ export const createVideoScrubber = (
 
     if (wasDrag) {
       flushSeek();
+    }
 
-      if (resume && resolved.play) {
-        resumePlayback();
-      }
+    if (resume && resolved.play && (wasDrag || video.paused)) {
+      resumePlayback();
     }
 
     notify();
@@ -309,11 +317,12 @@ export const createVideoScrubber = (
       return;
     }
 
-    if (isInteractiveTarget(event.target)) {
+    if (isInteractiveDescendant(event.target, target)) {
       return;
     }
 
     if (video.readyState === video.HAVE_NOTHING && video.networkState !== video.NETWORK_LOADING) {
+      awaitingSelfLoad = true;
       video.load();
     }
 
@@ -458,12 +467,33 @@ export const createVideoScrubber = (
     notify();
   };
 
-  const handleMediaReset = (): void => {
+  const handleMediaError = (): void => {
     cancelFrame();
     pendingSeek = null;
     finishGesture(EnumGestureEnd.Cancel, false);
     duration = null;
     applyAria();
+    notify();
+  };
+
+  const handleEmptied = (): void => {
+    const keepGesture = awaitingSelfLoad;
+
+    awaitingSelfLoad = false;
+    cancelFrame();
+    pendingSeek = null;
+
+    if (!keepGesture) {
+      finishGesture(EnumGestureEnd.Cancel, false);
+    }
+
+    duration = null;
+    applyAria();
+
+    if (resolved.play && activePointerId === null) {
+      resumePlayback();
+    }
+
     notify();
   };
 
@@ -475,7 +505,7 @@ export const createVideoScrubber = (
       return;
     }
 
-    finishGesture(EnumGestureEnd.Cancel, false);
+    finishGesture(EnumGestureEnd.Cancel, true);
     target.removeEventListener('pointerdown', handlePointerDown);
     target.removeEventListener('pointermove', handlePointerMove);
     target.removeEventListener('pointerup', handlePointerUp);
@@ -579,20 +609,21 @@ export const createVideoScrubber = (
     destroyed = true;
     cancelFrame();
     pendingSeek = null;
+    finishGesture(EnumGestureEnd.Cancel, false);
     detach();
     video.removeEventListener('loadedmetadata', handleDurationChange);
     video.removeEventListener('durationchange', handleDurationChange);
     video.removeEventListener('timeupdate', handleTimeUpdate);
-    video.removeEventListener('emptied', handleMediaReset);
-    video.removeEventListener('error', handleMediaReset);
+    video.removeEventListener('emptied', handleEmptied);
+    video.removeEventListener('error', handleMediaError);
     listeners.clear();
   };
 
   video.addEventListener('loadedmetadata', handleDurationChange);
   video.addEventListener('durationchange', handleDurationChange);
   video.addEventListener('timeupdate', handleTimeUpdate);
-  video.addEventListener('emptied', handleMediaReset);
-  video.addEventListener('error', handleMediaReset);
+  video.addEventListener('emptied', handleEmptied);
+  video.addEventListener('error', handleMediaError);
   video.loop = resolved.loop;
 
   if (resolved.play) {
