@@ -50,9 +50,10 @@
     "check:comments": "node scripts/check-comments.mjs",
     "test:unit": "node --test scripts/*.unit.mjs",
     "check:package": "publint && attw --pack . --profile esm-only",
-    "check": "pnpm format:check && pnpm lint && pnpm check:comments && pnpm typecheck && pnpm build && pnpm test:unit && pnpm check:package",
+    "check": "pnpm format:check && pnpm lint && pnpm check:comments && pnpm typecheck && pnpm build && pnpm test:unit && pnpm check:package && pnpm check:examples",
     "dev": "pnpm --filter ./examples/playground dev",
-    "prepack": "pnpm build"
+    "prepack": "pnpm build",
+    "check:examples": "pnpm --filter ./examples/playground typecheck && pnpm --filter ./examples/playground build"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",

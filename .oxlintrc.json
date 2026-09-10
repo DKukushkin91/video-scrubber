@@ -26,7 +26,13 @@
       }
     ],
     "react/react-in-jsx-scope": "off",
-    "jsx-a11y/prefer-tag-over-role": "off"
+    "jsx-a11y/prefer-tag-over-role": "off",
+    "import/no-unassigned-import": [
+      "error",
+      {
+        "allow": ["**/*.css"]
+      }
+    ]
   },
   "ignorePatterns": ["dist", "examples/**/dist"]
 }

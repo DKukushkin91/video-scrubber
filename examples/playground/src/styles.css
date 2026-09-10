@@ -1,0 +1,58 @@
+body {
+  margin: 0;
+  padding: 2rem;
+  font-family: system-ui, sans-serif;
+  color: #ececec;
+  background: #1e1e1e;
+}
+
+main {
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+nav a {
+  color: #8ab4f8;
+}
+
+.demos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+}
+
+.scrub {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #111;
+  cursor: ew-resize;
+}
+
+.scrub:focus-visible {
+  outline: 3px solid #8ab4f8;
+  outline-offset: 2px;
+}
+
+.scrub video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  align-items: center;
+  margin: 1rem 0;
+}
+
+.readout {
+  font-variant-numeric: tabular-nums;
+  color: #b8b8b8;
+}

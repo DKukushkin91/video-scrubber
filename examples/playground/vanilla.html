@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>video-scrubber · vanilla playground</title>
+  </head>
+  <body>
+    <main>
+      <nav><a href="/">React playground</a></nav>
+      <h1>createVideoScrubber</h1>
+      <p>
+        Drag or swipe horizontally to scrub. Arrow keys, PageUp/PageDown, Home and End work when the preview
+        is focused.
+      </p>
+      <div
+        class="scrub"
+        data-scrub
+        role="slider"
+        tabindex="0"
+        aria-label="Plan walkthrough"
+        aria-valuemin="0"
+        aria-valuemax="0"
+        aria-valuenow="0"
+        aria-disabled="true"
+      >
+        <video
+          src="/president.mp4"
+          poster="/president.jpg"
+          muted
+          playsinline
+          preload="metadata"
+          aria-hidden="true"
+        ></video>
+      </div>
+      <p class="readout" data-readout></p>
+      <div class="controls">
+        <label><input type="checkbox" data-play checked /> play</label>
+        <label><input type="checkbox" data-loop checked /> loop</label>
+        <label
+          >sensitivity <input type="range" data-sensitivity min="0.25" max="4" step="0.25" value="1" />
+          <output data-sensitivity-value>1</output></label
+        >
+      </div>
+    </main>
+    <script type="module" src="/src/main-vanilla.ts"></script>
+  </body>
+</html>
