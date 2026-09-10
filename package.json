@@ -1,0 +1,83 @@
+{
+  "name": "@dskukushkin/video-scrubber",
+  "version": "0.0.0",
+  "description": "Drag-to-scrub HTML video: pointer and touch scrubbing with infinite wrap, optional autoplay, a framework-agnostic core and a React adapter.",
+  "keywords": [
+    "drag",
+    "pointer-events",
+    "react",
+    "scrub",
+    "scrubber",
+    "swipe",
+    "video"
+  ],
+  "homepage": "https://github.com/DKukushkin91/video-scrubber#readme",
+  "bugs": "https://github.com/DKukushkin91/video-scrubber/issues",
+  "license": "MIT",
+  "author": "Dmitrii Kukushkin",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DKukushkin91/video-scrubber.git"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "import": "./dist/react.js",
+      "default": "./dist/react.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "build:watch": "tsdown --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint --type-aware",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "check:comments": "node scripts/check-comments.mjs",
+    "test:unit": "node --test scripts/*.unit.mjs",
+    "check:package": "publint && attw --pack . --profile esm-only",
+    "check": "pnpm format:check && pnpm lint && pnpm check:comments && pnpm typecheck && pnpm build && pnpm test:unit && pnpm check:package",
+    "dev": "pnpm --filter ./examples/playground dev",
+    "prepack": "pnpm build"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "oxc-parser": "^0.149.0",
+    "oxfmt": "^0.67.0",
+    "oxlint": "^1.82.0",
+    "oxlint-tsgolint": "^7.0.2001",
+    "publint": "^0.3.24",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "tsdown": "^0.23.0",
+    "typescript": "^7.0.2"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@11.5.3"
+}
