@@ -29,7 +29,7 @@
   "ignorePatterns": ["dist", "examples/**/dist"],
   "overrides": [
     {
-      "files": ["src/index.ts", "src/react.ts", "src/internal.ts"],
+      "files": ["src/react.ts"],
       "rules": {
         "unicorn/require-module-specifiers": "off"
       }
