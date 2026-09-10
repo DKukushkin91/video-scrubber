@@ -24,15 +24,9 @@
       {
         "case": "kebabCase"
       }
-    ]
+    ],
+    "react/react-in-jsx-scope": "off",
+    "jsx-a11y/prefer-tag-over-role": "off"
   },
-  "ignorePatterns": ["dist", "examples/**/dist"],
-  "overrides": [
-    {
-      "files": ["src/react.ts"],
-      "rules": {
-        "unicorn/require-module-specifiers": "off"
-      }
-    }
-  ]
+  "ignorePatterns": ["dist", "examples/**/dist"]
 }
