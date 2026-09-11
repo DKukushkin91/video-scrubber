@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readdir, readFile } from 'node:fs/promises';
 import { describe, it } from 'node:test';
 
 import { createElement } from 'react';
@@ -34,6 +35,29 @@ describe('server-side rendering', () => {
     assert.strictEqual(core.formatTimeText(65, 130), '1:05 / 2:10');
     assert.strictEqual(typeof react.ScrubVideo, 'function');
     assert.strictEqual(typeof react.useVideoScrubber, 'function');
+  });
+
+  it('keeps the client directive on the react entry and React out of the core chunks', async () => {
+    const distUrl = new URL('../dist/', import.meta.url);
+    const reactEntry = await readFile(new URL('react.js', distUrl), 'utf8');
+    const [firstLine] = reactEntry.split('\n');
+
+    assert.match(firstLine, /^["']use client["'];?$/);
+
+    const fileNames = (await readdir(distUrl)).filter(
+      (fileName) => fileName.endsWith('.js') && fileName !== 'react.js',
+    );
+
+    const sources = await Promise.all(
+      fileNames.map((fileName) => readFile(new URL(fileName, distUrl), 'utf8')),
+    );
+
+    sources.forEach((source, index) => {
+      const fileName = fileNames[index];
+
+      assert.ok(!source.includes('use client'), `${fileName} must not carry the client directive`);
+      assert.ok(!/from\s*["']react["']/.test(source), `${fileName} must not import React`);
+    });
   });
 
   it('renders deterministic slider markup independent of behavior props', async () => {
