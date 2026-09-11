@@ -1,4 +1,4 @@
-import { createVideoScrubber } from '@dskukushkin/video-scrubber';
+import { createVideoScrubber } from '@dkukushkin/video-scrubber';
 
 import './styles.css';
 

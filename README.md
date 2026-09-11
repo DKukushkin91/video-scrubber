@@ -1,16 +1,16 @@
-# @dskukushkin/video-scrubber
+# @dkukushkin/video-scrubber
 
 Drag a `<video>` like an object: press and move right to play it forward, move left to play it backward, cross either end and it wraps around — an endless loop in both directions. On touch devices the same works with a horizontal swipe while vertical scrolling and pinch-zoom keep working. Release the pointer and the frame stays; with `play` enabled the clip continues from that frame.
 
-- Framework-agnostic core (`@dskukushkin/video-scrubber`) — no dependencies.
-- Optional React adapter (`@dskukushkin/video-scrubber/react`) — `useVideoScrubber` and `<ScrubVideo>`.
+- Framework-agnostic core (`@dkukushkin/video-scrubber`) — no dependencies.
+- Optional React adapter (`@dkukushkin/video-scrubber/react`) — `useVideoScrubber` and `<ScrubVideo>`.
 - Safe to import on the server: nothing touches the DOM until a controller is created.
 - Keyboard support and slider ARIA out of the box.
 
 ## Install
 
 ```bash
-pnpm add @dskukushkin/video-scrubber
+pnpm add @dkukushkin/video-scrubber
 ```
 
 React is an optional peer dependency (`>=18`) — only needed for the `/react` entry.
@@ -18,7 +18,7 @@ React is an optional peer dependency (`>=18`) — only needed for the `/react` e
 ## React
 
 ```tsx
-import { ScrubVideo } from '@dskukushkin/video-scrubber/react';
+import { ScrubVideo } from '@dkukushkin/video-scrubber/react';
 
 export const PlanPreview = ({ isHovered }: { isHovered: boolean }) => (
   <ScrubVideo
@@ -38,7 +38,7 @@ Need your own markup, or the gesture on a larger surface than the slider itself?
 
 ```tsx
 import { useCallback, useRef } from 'react';
-import { useVideoScrubber } from '@dskukushkin/video-scrubber/react';
+import { useVideoScrubber } from '@dkukushkin/video-scrubber/react';
 
 export const Card = () => {
   const cardRef = useRef<HTMLElement | null>(null);
@@ -81,7 +81,7 @@ Both refs are callback refs, so conditional rendering and node replacement are h
 ## Vanilla
 
 ```ts
-import { createVideoScrubber } from '@dskukushkin/video-scrubber';
+import { createVideoScrubber } from '@dkukushkin/video-scrubber';
 
 const video = document.querySelector('video')!;
 const control = video.parentElement!;

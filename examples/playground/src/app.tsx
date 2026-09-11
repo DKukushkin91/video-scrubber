@@ -1,4 +1,4 @@
-import { ScrubVideo } from '@dskukushkin/video-scrubber/react';
+import { ScrubVideo } from '@dkukushkin/video-scrubber/react';
 import { type ReactElement, useState } from 'react';
 
 import { HookDemo } from './hook-demo';
@@ -13,7 +13,7 @@ export const App = (): ReactElement => {
       <nav>
         <a href="/vanilla.html">Vanilla playground</a>
       </nav>
-      <h1>@dskukushkin/video-scrubber</h1>
+      <h1>@dkukushkin/video-scrubber</h1>
       <p>
         Drag or swipe horizontally to scrub. Arrow keys, PageUp/PageDown, Home and End work when a preview is
         focused.

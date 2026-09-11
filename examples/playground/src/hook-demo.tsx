@@ -1,4 +1,4 @@
-import { useVideoScrubber } from '@dskukushkin/video-scrubber/react';
+import { useVideoScrubber } from '@dkukushkin/video-scrubber/react';
 import { type ReactElement, useCallback } from 'react';
 
 import type { IDemoSettings } from './settings';

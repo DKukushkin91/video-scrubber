@@ -8,7 +8,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@dskukushkin/video-scrubber": "workspace:*",
+    "@dkukushkin/video-scrubber": "workspace:*",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },

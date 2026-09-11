@@ -1,5 +1,5 @@
 {
-  "name": "@dskukushkin/video-scrubber",
+  "name": "@dkukushkin/video-scrubber",
   "version": "0.0.0",
   "description": "Drag-to-scrub HTML video: pointer and touch scrubbing with infinite wrap, optional autoplay, a framework-agnostic core and a React adapter.",
   "keywords": [
