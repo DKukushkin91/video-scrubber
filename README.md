@@ -94,6 +94,8 @@ scrubber.update({ play: false });
 scrubber.destroy();
 ```
 
+`attach({ pointerTarget, controlTarget })` takes two elements: the pointer target receives the drag; the control target receives keyboard events and the slider values (`aria-valuemin`, `aria-valuemax`, `aria-valuenow`, `aria-valuetext`, plus `aria-disabled` until the duration is known — all restored on detach). Omit `controlTarget` to use the pointer target for both; pass `null` to turn keyboard and ARIA off — the right choice when the pointer target is a whole card with links and no slider role of its own.
+
 The core never sets `muted`, `preload` or ARIA roles on your elements — give the video `muted` and `playsinline` if you want autoplay, `preload="metadata"` so the duration is known before the first gesture, and the control target `role="slider"` with `tabindex="0"` if you want keyboard access.
 
 ## Options
