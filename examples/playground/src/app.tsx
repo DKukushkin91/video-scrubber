@@ -30,6 +30,7 @@ export const App = (): ReactElement => {
             play={settings.play}
             loop={settings.loop}
             sensitivity={settings.sensitivity}
+            invertDirection={settings.invertDirection}
           />
         </section>
         <HookDemo {...settings} />

@@ -31,6 +31,7 @@ export interface IGestureState {
 export interface IScrubParams {
   duration: number | null;
   sensitivity: number;
+  invertDirection: boolean;
   dragThresholdPx: number;
 }
 
@@ -83,7 +84,12 @@ export const deltaToSeconds = (
   duration: number,
   sensitivity: number,
 ): number => {
-  if (trackWidth <= 0 || !isPlayableDuration(duration) || !Number.isFinite(deltaX)) {
+  if (
+    !Number.isFinite(trackWidth) ||
+    trackWidth <= 0 ||
+    !isPlayableDuration(duration) ||
+    !Number.isFinite(deltaX)
+  ) {
     return 0;
   }
 
@@ -144,8 +150,12 @@ export const moveGesture = (
   }
 
   const offsetSeconds = deltaToSeconds(deltaX, state.trackWidth, params.duration, params.sensitivity);
+  const direction = params.invertDirection ? -1 : 1;
 
-  return { state: draggingState, seekTo: wrapTime(state.startTime + offsetSeconds, params.duration) };
+  return {
+    state: draggingState,
+    seekTo: wrapTime(state.startTime + direction * offsetSeconds, params.duration),
+  };
 };
 
 export const endGesture = (state: IGestureState): IEndResult => ({
@@ -176,6 +186,8 @@ const SEEK_RESOLVERS: ReadonlyMap<string, TSeekResolver> = new Map<string, TSeek
   [EnumSeekKey.Home, seekToStart],
   [EnumSeekKey.End, seekToEnd],
 ]);
+
+export const isSeekKey = (key: string): boolean => SEEK_RESOLVERS.has(key);
 
 export const keyToSeekTime = (key: string, currentTime: number, params: IKeyboardParams): number | null =>
   SEEK_RESOLVERS.get(key)?.(currentTime, params) ?? null;

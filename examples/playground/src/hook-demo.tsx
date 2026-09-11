@@ -3,8 +3,13 @@ import { type ReactElement, useCallback } from 'react';
 
 import type { IDemoSettings } from './settings';
 
-export const HookDemo = ({ play, loop, sensitivity }: IDemoSettings): ReactElement => {
-  const { videoRef, controlRef, snapshot, seekBy } = useVideoScrubber({ play, loop, sensitivity });
+export const HookDemo = ({ play, loop, sensitivity, invertDirection }: IDemoSettings): ReactElement => {
+  const { videoRef, controlRef, snapshot, seekBy } = useVideoScrubber({
+    play,
+    loop,
+    sensitivity,
+    invertDirection,
+  });
   const handleStepBack = useCallback(() => {
     seekBy(-1);
   }, [seekBy]);

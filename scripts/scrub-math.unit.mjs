@@ -77,6 +77,7 @@ describe('deltaToSeconds', () => {
     [200, 400, 10, 2, 10],
     [200, 400, 10, 0.5, 2.5],
     [200, 0, 10, 1, 0],
+    [200, Number.NaN, 10, 1, 0],
     [200, 400, Number.NaN, 1, 0],
   ];
 
@@ -127,7 +128,7 @@ describe('formatTimeText', () => {
   });
 });
 
-const params = { duration: 10, sensitivity: 1, dragThresholdPx: 4 };
+const params = { duration: 10, sensitivity: 1, invertDirection: false, dragThresholdPx: 4 };
 const createPendingGesture = () => beginGesture(100, 50, 8, 400);
 const dragTo = (clientX, clientY = 50) => moveGesture(createPendingGesture(), clientX, clientY, params);
 
@@ -189,6 +190,15 @@ describe('gesture reducer', () => {
     const moveResult = moveGesture(createPendingGesture(), 300, 50, { ...params, sensitivity: 2 });
 
     assertClose(moveResult.seekTo, 8);
+  });
+
+  it('reverses the drag direction when inverted', () => {
+    const inverted = { ...params, invertDirection: true };
+
+    assertClose(moveGesture(createPendingGesture(), 140, 50, inverted).seekTo, 7);
+    assertClose(moveGesture(createPendingGesture(), 60, 50, inverted).seekTo, 9);
+    assertClose(moveGesture(createPendingGesture(), 500, 50, inverted).seekTo, 8);
+    assertClose(moveGesture(createPendingGesture(), -300, 50, inverted).seekTo, 8);
   });
 
   it('drags without seeking until the duration is known', () => {

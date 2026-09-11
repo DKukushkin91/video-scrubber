@@ -9,6 +9,7 @@ import {
   endGesture,
   formatTimeText,
   isPlayableDuration,
+  isSeekKey,
   keyToSeekTime,
   moveGesture,
   rebaseGesture,
@@ -18,6 +19,7 @@ export interface IVideoScrubberOptions {
   play?: boolean;
   loop?: boolean;
   sensitivity?: number;
+  invertDirection?: boolean;
   dragThresholdPx?: number;
   keyboardStepSeconds?: number;
   pageStepSeconds?: number;
@@ -53,6 +55,7 @@ interface IResolvedOptions {
   play: boolean;
   loop: boolean;
   sensitivity: number;
+  invertDirection: boolean;
   dragThresholdPx: number;
   keyboardStepSeconds: number;
   pageStepSeconds: number;
@@ -78,6 +81,7 @@ const DEFAULT_OPTIONS: IResolvedOptions = {
   play: true,
   loop: true,
   sensitivity: 1,
+  invertDirection: false,
   dragThresholdPx: 4,
   keyboardStepSeconds: 1,
   pageStepSeconds: 10,
@@ -103,6 +107,9 @@ const resolveOptions = (
     play: has('play') ? (next.play ?? DEFAULT_OPTIONS.play) : current.play,
     loop: has('loop') ? (next.loop ?? DEFAULT_OPTIONS.loop) : current.loop,
     sensitivity: has('sensitivity') ? (next.sensitivity ?? DEFAULT_OPTIONS.sensitivity) : current.sensitivity,
+    invertDirection: has('invertDirection')
+      ? (next.invertDirection ?? DEFAULT_OPTIONS.invertDirection)
+      : current.invertDirection,
     dragThresholdPx: has('dragThresholdPx')
       ? (next.dragThresholdPx ?? DEFAULT_OPTIONS.dragThresholdPx)
       : current.dragThresholdPx,
@@ -177,6 +184,7 @@ export const createVideoScrubber = (
   let savedUserSelect = '';
   let savedWebkitUserSelect = '';
   let savedControlAttributes: [string, string | null][] = [];
+  let lastAriaSecond = -1;
   let lastAriaText = '';
   let destroyed = false;
   let snapshot: IVideoScrubberSnapshot = {
@@ -220,14 +228,16 @@ export const createVideoScrubber = (
       control.setAttribute('aria-valuenow', '0');
       control.setAttribute('aria-valuetext', resolved.formatValueText(0, 0));
       control.setAttribute('aria-disabled', 'true');
+      lastAriaSecond = -1;
       lastAriaText = '';
 
       return;
     }
 
+    lastAriaSecond = Math.floor(video.currentTime);
     lastAriaText = resolved.formatValueText(video.currentTime, duration);
     control.setAttribute('aria-valuemax', String(Math.floor(duration)));
-    control.setAttribute('aria-valuenow', String(Math.floor(video.currentTime)));
+    control.setAttribute('aria-valuenow', String(lastAriaSecond));
     control.setAttribute('aria-valuetext', lastAriaText);
     control.removeAttribute('aria-disabled');
   };
@@ -281,6 +291,7 @@ export const createVideoScrubber = (
   const getScrubParams = (): IScrubParams => ({
     duration,
     sensitivity: resolved.sensitivity,
+    invertDirection: resolved.invertDirection,
     dragThresholdPx: resolved.dragThresholdPx,
   });
 
@@ -317,6 +328,13 @@ export const createVideoScrubber = (
     notify();
   };
 
+  const ensureMediaLoading = (): void => {
+    if (video.readyState === video.HAVE_NOTHING && video.networkState !== video.NETWORK_LOADING) {
+      awaitingSelfLoad = true;
+      video.load();
+    }
+  };
+
   const handlePointerDown = (event: PointerEvent): void => {
     const target = pointerTarget;
 
@@ -334,10 +352,7 @@ export const createVideoScrubber = (
       return;
     }
 
-    if (video.readyState === video.HAVE_NOTHING && video.networkState !== video.NETWORK_LOADING) {
-      awaitingSelfLoad = true;
-      video.load();
-    }
+    ensureMediaLoading();
 
     const trackWidth = resolved.getTrackWidth?.(target) ?? target.getBoundingClientRect().width;
 
@@ -426,12 +441,18 @@ export const createVideoScrubber = (
 
   const handleKeyDown = (event: KeyboardEvent): void => {
     if (
-      duration === null ||
       event.target !== controlTarget ||
       event.altKey ||
       event.ctrlKey ||
-      event.metaKey
+      event.metaKey ||
+      !isSeekKey(event.key)
     ) {
+      return;
+    }
+
+    ensureMediaLoading();
+
+    if (duration === null) {
       return;
     }
 
@@ -468,11 +489,13 @@ export const createVideoScrubber = (
     const control = controlTarget;
 
     if (control !== null && duration !== null) {
+      const second = Math.floor(video.currentTime);
       const valueText = resolved.formatValueText(video.currentTime, duration);
 
-      if (valueText !== lastAriaText) {
+      if (second !== lastAriaSecond || valueText !== lastAriaText) {
+        lastAriaSecond = second;
         lastAriaText = valueText;
-        control.setAttribute('aria-valuenow', String(Math.floor(video.currentTime)));
+        control.setAttribute('aria-valuenow', String(second));
         control.setAttribute('aria-valuetext', valueText);
       }
     }
@@ -546,6 +569,10 @@ export const createVideoScrubber = (
   };
 
   const attach = (targets: IAttachTargets): void => {
+    if (destroyed) {
+      return;
+    }
+
     detach();
 
     const target = targets.pointerTarget;
@@ -571,6 +598,10 @@ export const createVideoScrubber = (
   };
 
   const update = (next: Partial<IVideoScrubberOptions>): void => {
+    if (destroyed) {
+      return;
+    }
+
     const previous = resolved;
 
     resolved = resolveOptions(previous, next);
@@ -595,18 +626,30 @@ export const createVideoScrubber = (
   };
 
   const seekTo = (time: number): void => {
+    if (destroyed) {
+      return;
+    }
+
     if (duration !== null) {
       requestSeek(clampTime(time, duration));
     }
   };
 
   const seekBy = (seconds: number): void => {
+    if (destroyed) {
+      return;
+    }
+
     seekTo((pendingSeek ?? video.currentTime) + seconds);
   };
 
   const getSnapshot = (): IVideoScrubberSnapshot => snapshot;
 
   const subscribe = (listener: () => void): (() => void) => {
+    if (destroyed) {
+      return () => undefined;
+    }
+
     listeners.add(listener);
 
     return () => {

@@ -20,6 +20,12 @@ export const SettingsPanel = ({ settings, onChange }: IProps): ReactElement => {
     },
     [settings, onChange],
   );
+  const handleInvertChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      onChange({ ...settings, invertDirection: event.target.checked });
+    },
+    [settings, onChange],
+  );
   const handleSensitivityChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
       onChange({ ...settings, sensitivity: Number(event.target.value) });
@@ -34,6 +40,10 @@ export const SettingsPanel = ({ settings, onChange }: IProps): ReactElement => {
       </label>
       <label>
         <input type="checkbox" checked={settings.loop} onChange={handleLoopChange} /> loop
+      </label>
+      <label>
+        <input type="checkbox" checked={settings.invertDirection} onChange={handleInvertChange} /> invert
+        direction
       </label>
       <label>
         sensitivity{' '}
