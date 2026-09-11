@@ -37,7 +37,7 @@ export const PlanPreview = ({ isHovered }: { isHovered: boolean }) => (
 Need your own markup, or the gesture on a larger surface than the slider itself? Use the hook:
 
 ```tsx
-import { useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { useVideoScrubber } from '@dskukushkin/video-scrubber/react';
 
 export const Card = () => {
@@ -46,6 +46,9 @@ export const Card = () => {
     play: false,
     pointerTargetRef: cardRef,
   });
+  const handleStepForward = useCallback(() => {
+    seekBy(1);
+  }, [seekBy]);
 
   return (
     <article ref={cardRef}>
@@ -62,7 +65,7 @@ export const Card = () => {
         <video ref={videoRef} src="/videos/plan.mp4" muted playsInline preload="metadata" aria-hidden />
       </div>
       <p>{snapshot.currentTime.toFixed(1)} s</p>
-      <button type="button" onClick={() => seekBy(1)}>
+      <button type="button" onClick={handleStepForward}>
         +1 s
       </button>
       <a href="/details">Details</a>
@@ -87,7 +90,9 @@ const scrubber = createVideoScrubber(video, { play: true, loop: true });
 scrubber.attach({ pointerTarget: control });
 
 scrubber.subscribe(() => {
-  const { currentTime, duration, isDragging } = scrubber.getSnapshot();
+  const { currentTime, duration, isDragging, play } = scrubber.getSnapshot();
+
+  readout.textContent = `${currentTime.toFixed(1)} / ${String(duration ?? '?')}${isDragging ? ' (dragging)' : ''}${play ? '' : ' (paused)'}`;
 });
 
 scrubber.update({ play: false });
@@ -95,6 +100,8 @@ scrubber.destroy();
 ```
 
 `attach({ pointerTarget, controlTarget })` takes two elements: the pointer target receives the drag; the control target receives keyboard events and the slider values (`aria-valuemin`, `aria-valuemax`, `aria-valuenow`, `aria-valuetext`, plus `aria-disabled` until the duration is known — all restored on detach). Omit `controlTarget` to use the pointer target for both; pass `null` to turn keyboard and ARIA off — the right choice when the pointer target is a whole card with links and no slider role of its own.
+
+The controller exposes `attach(targets)`, `detach()`, `destroy()` (terminal — later calls are ignored), `update(partialOptions)`, `seekTo(seconds)` and `seekBy(seconds)` (both clamp to the clip), `getSnapshot()` → `{ currentTime, duration, isDragging, play }` and `subscribe(listener)`. The `.` entry also exports the helpers `wrapTime(time, duration)` (wraps into `[0, duration)`), `clampTime(time, duration)` (clamps into `[0, duration]`) and `formatTimeText(currentTime, duration)` (the default `aria-valuetext` formatter).
 
 The core never sets `muted`, `preload` or ARIA roles on your elements — give the video `muted` and `playsinline` if you want autoplay, `preload="metadata"` so the duration is known before the first gesture, and the control target `role="slider"` with `tabindex="0"` if you want keyboard access.
 
@@ -105,6 +112,7 @@ The core never sets `muted`, `preload` or ARIA roles on your elements — give t
 | `play`                | `true`        | Keep the clip playing; a drag pauses it and it resumes from the released frame.                         |
 | `loop`                | `true`        | Sets `video.loop` for playback. Dragging always wraps regardless.                                       |
 | `sensitivity`         | `1`           | How many loops one full drag across the pointer target makes. `2` — half the width is a full loop.      |
+| `invertDirection`     | `false`       | Dragging or swiping right rewinds and left plays forward. Keyboard keys keep their usual meaning.       |
 | `dragThresholdPx`     | `4`           | Horizontal movement before a press becomes a drag. Movement must also be more horizontal than vertical. |
 | `keyboardStepSeconds` | `1`           | Arrow keys step.                                                                                        |
 | `pageStepSeconds`     | `10`          | PageUp / PageDown step.                                                                                 |
