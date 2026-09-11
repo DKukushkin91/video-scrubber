@@ -98,16 +98,29 @@ const resolveOptions = (
   current: IResolvedOptions,
   next: Partial<IVideoScrubberOptions>,
 ): IResolvedOptions => {
+  const has = (key: keyof IVideoScrubberOptions): boolean => Object.hasOwn(next, key);
   const resolved: IResolvedOptions = {
-    play: next.play ?? current.play,
-    loop: next.loop ?? current.loop,
-    sensitivity: next.sensitivity ?? current.sensitivity,
-    dragThresholdPx: next.dragThresholdPx ?? current.dragThresholdPx,
-    keyboardStepSeconds: next.keyboardStepSeconds ?? current.keyboardStepSeconds,
-    pageStepSeconds: next.pageStepSeconds ?? current.pageStepSeconds,
-    getTrackWidth: next.getTrackWidth ?? current.getTrackWidth,
-    formatValueText: next.formatValueText ?? current.formatValueText,
-    onPlaybackError: next.onPlaybackError ?? current.onPlaybackError,
+    play: has('play') ? (next.play ?? DEFAULT_OPTIONS.play) : current.play,
+    loop: has('loop') ? (next.loop ?? DEFAULT_OPTIONS.loop) : current.loop,
+    sensitivity: has('sensitivity') ? (next.sensitivity ?? DEFAULT_OPTIONS.sensitivity) : current.sensitivity,
+    dragThresholdPx: has('dragThresholdPx')
+      ? (next.dragThresholdPx ?? DEFAULT_OPTIONS.dragThresholdPx)
+      : current.dragThresholdPx,
+    keyboardStepSeconds: has('keyboardStepSeconds')
+      ? (next.keyboardStepSeconds ?? DEFAULT_OPTIONS.keyboardStepSeconds)
+      : current.keyboardStepSeconds,
+    pageStepSeconds: has('pageStepSeconds')
+      ? (next.pageStepSeconds ?? DEFAULT_OPTIONS.pageStepSeconds)
+      : current.pageStepSeconds,
+    getTrackWidth: has('getTrackWidth')
+      ? (next.getTrackWidth ?? DEFAULT_OPTIONS.getTrackWidth)
+      : current.getTrackWidth,
+    formatValueText: has('formatValueText')
+      ? (next.formatValueText ?? DEFAULT_OPTIONS.formatValueText)
+      : current.formatValueText,
+    onPlaybackError: has('onPlaybackError')
+      ? (next.onPlaybackError ?? DEFAULT_OPTIONS.onPlaybackError)
+      : current.onPlaybackError,
   };
 
   assertOption('sensitivity', resolved.sensitivity, false);
@@ -164,7 +177,7 @@ export const createVideoScrubber = (
   let savedUserSelect = '';
   let savedWebkitUserSelect = '';
   let savedControlAttributes: [string, string | null][] = [];
-  let lastAriaSecond = -1;
+  let lastAriaText = '';
   let destroyed = false;
   let snapshot: IVideoScrubberSnapshot = {
     isDragging: false,
@@ -207,15 +220,15 @@ export const createVideoScrubber = (
       control.setAttribute('aria-valuenow', '0');
       control.setAttribute('aria-valuetext', resolved.formatValueText(0, 0));
       control.setAttribute('aria-disabled', 'true');
-      lastAriaSecond = -1;
+      lastAriaText = '';
 
       return;
     }
 
-    lastAriaSecond = Math.floor(video.currentTime);
+    lastAriaText = resolved.formatValueText(video.currentTime, duration);
     control.setAttribute('aria-valuemax', String(Math.floor(duration)));
-    control.setAttribute('aria-valuenow', String(lastAriaSecond));
-    control.setAttribute('aria-valuetext', resolved.formatValueText(video.currentTime, duration));
+    control.setAttribute('aria-valuenow', String(Math.floor(video.currentTime)));
+    control.setAttribute('aria-valuetext', lastAriaText);
     control.removeAttribute('aria-disabled');
   };
 
@@ -455,12 +468,12 @@ export const createVideoScrubber = (
     const control = controlTarget;
 
     if (control !== null && duration !== null) {
-      const second = Math.floor(video.currentTime);
+      const valueText = resolved.formatValueText(video.currentTime, duration);
 
-      if (second !== lastAriaSecond) {
-        lastAriaSecond = second;
-        control.setAttribute('aria-valuenow', String(second));
-        control.setAttribute('aria-valuetext', resolved.formatValueText(video.currentTime, duration));
+      if (valueText !== lastAriaText) {
+        lastAriaText = valueText;
+        control.setAttribute('aria-valuenow', String(Math.floor(video.currentTime)));
+        control.setAttribute('aria-valuetext', valueText);
       }
     }
 

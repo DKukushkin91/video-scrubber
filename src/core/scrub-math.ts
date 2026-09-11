@@ -153,45 +153,32 @@ export const endGesture = (state: IGestureState): IEndResult => ({
   wasDrag: state.phase === EnumGesturePhase.Dragging,
 });
 
-const SEEK_KEYS: ReadonlySet<string> = new Set<string>([
-  EnumSeekKey.ArrowRight,
-  EnumSeekKey.ArrowUp,
-  EnumSeekKey.ArrowLeft,
-  EnumSeekKey.ArrowDown,
-  EnumSeekKey.PageUp,
-  EnumSeekKey.PageDown,
-  EnumSeekKey.Home,
-  EnumSeekKey.End,
+type TSeekResolver = (currentTime: number, params: IKeyboardParams) => number;
+
+const stepForward: TSeekResolver = (currentTime, { duration, stepSeconds }) =>
+  clampTime(currentTime + stepSeconds, duration);
+const stepBackward: TSeekResolver = (currentTime, { duration, stepSeconds }) =>
+  clampTime(currentTime - stepSeconds, duration);
+const pageForward: TSeekResolver = (currentTime, { duration, pageStepSeconds }) =>
+  clampTime(currentTime + pageStepSeconds, duration);
+const pageBackward: TSeekResolver = (currentTime, { duration, pageStepSeconds }) =>
+  clampTime(currentTime - pageStepSeconds, duration);
+const seekToStart: TSeekResolver = () => 0;
+const seekToEnd: TSeekResolver = (_currentTime, { duration }) => clampTime(duration, duration);
+
+const SEEK_RESOLVERS: ReadonlyMap<string, TSeekResolver> = new Map<string, TSeekResolver>([
+  [EnumSeekKey.ArrowRight, stepForward],
+  [EnumSeekKey.ArrowUp, stepForward],
+  [EnumSeekKey.ArrowLeft, stepBackward],
+  [EnumSeekKey.ArrowDown, stepBackward],
+  [EnumSeekKey.PageUp, pageForward],
+  [EnumSeekKey.PageDown, pageBackward],
+  [EnumSeekKey.Home, seekToStart],
+  [EnumSeekKey.End, seekToEnd],
 ]);
 
-const isSeekKey = (key: string): key is EnumSeekKey => SEEK_KEYS.has(key);
-
-export const keyToSeekTime = (key: string, currentTime: number, params: IKeyboardParams): number | null => {
-  if (!isSeekKey(key)) {
-    return null;
-  }
-
-  const { duration, stepSeconds, pageStepSeconds } = params;
-
-  switch (key) {
-    case EnumSeekKey.ArrowRight:
-    case EnumSeekKey.ArrowUp:
-      return clampTime(currentTime + stepSeconds, duration);
-    case EnumSeekKey.ArrowLeft:
-    case EnumSeekKey.ArrowDown:
-      return clampTime(currentTime - stepSeconds, duration);
-    case EnumSeekKey.PageUp:
-      return clampTime(currentTime + pageStepSeconds, duration);
-    case EnumSeekKey.PageDown:
-      return clampTime(currentTime - pageStepSeconds, duration);
-    case EnumSeekKey.Home:
-      return 0;
-    case EnumSeekKey.End:
-      return clampTime(duration, duration);
-    default:
-      return null;
-  }
-};
+export const keyToSeekTime = (key: string, currentTime: number, params: IKeyboardParams): number | null =>
+  SEEK_RESOLVERS.get(key)?.(currentTime, params) ?? null;
 
 const formatClock = (totalSeconds: number): string => {
   const wholeSeconds = Number.isFinite(totalSeconds) ? Math.floor(Math.max(totalSeconds, 0)) : 0;

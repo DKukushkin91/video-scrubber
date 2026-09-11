@@ -1,6 +1,14 @@
 'use client';
 
-import { type RefObject, useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import {
+  type RefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 
 import {
   type IVideoScrubber,
@@ -58,12 +66,10 @@ export const useVideoScrubber = <TControl extends HTMLElement = HTMLDivElement>(
   const [video, setVideo] = useState<HTMLVideoElement | null>(null);
   const [control, setControl] = useState<TControl | null>(null);
   const [scrubber, setScrubber] = useState<IVideoScrubber | null>(null);
-  const [idleSnapshot] = useState<IVideoScrubberSnapshot>(() => ({
-    isDragging: false,
-    duration: null,
-    currentTime: 0,
-    play,
-  }));
+  const idleSnapshot = useMemo<IVideoScrubberSnapshot>(
+    () => ({ isDragging: false, duration: null, currentTime: 0, play }),
+    [play],
+  );
 
   useEffect(() => {
     latestOptionsRef.current = coreOptions;
